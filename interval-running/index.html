@@ -82,6 +82,38 @@
 
         .section-header .card-title { margin-bottom: 0; }
 
+        /* ── 접기/펼치기 ── */
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            padding: 2px 0;
+        }
+
+        .collapsible-header .card-title { margin-bottom: 0; }
+
+        .collapse-arrow {
+            font-size: 0.85rem;
+            color: var(--muted);
+            transition: transform 0.25s;
+        }
+
+        .collapse-arrow.open { transform: rotate(180deg); }
+
+        .collapsible-body {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease, margin-top 0.3s ease;
+            margin-top: 0;
+        }
+
+        .collapsible-body.open {
+            max-height: 2000px;
+            margin-top: 14px;
+        }
+
         /* ── 타이머 ── */
         .timer-card {
             text-align: center;
@@ -395,7 +427,11 @@
 
 <!-- 웜업 / 쿨다운 -->
 <div class="card">
-    <div class="card-title">웜업 / 쿨다운 &nbsp;(0:00 설정 시 건너뜀)</div>
+    <div class="collapsible-header" onclick="toggleCollapse('wc')">
+        <div class="card-title">웜업 / 쿨다운 &nbsp;(0:00 설정 시 건너뜀)</div>
+        <span class="collapse-arrow" id="arrow-wc">▼</span>
+    </div>
+    <div class="collapsible-body" id="body-wc">
 
     <div class="wc-block">
         <div class="wc-label" style="color:var(--warmup-color)">🟡 웜업</div>
@@ -440,15 +476,20 @@
             </div>
         </div>
     </div>
+
+    </div><!-- /collapsible-body wc -->
 </div>
 
 <!-- 세트 구성 -->
 <div class="card">
-    <div class="section-header">
+    <div class="collapsible-header" onclick="toggleCollapse('sets')">
         <div class="card-title">세트 구성</div>
+        <span class="collapse-arrow" id="arrow-sets">▼</span>
     </div>
-    <div id="sets-container"></div>
-    <button class="add-set-btn" onclick="addSet()">+ 세트 추가</button>
+    <div class="collapsible-body" id="body-sets">
+        <div id="sets-container"></div>
+        <button class="add-set-btn" onclick="addSet()">+ 세트 추가</button>
+    </div>
 </div>
 
 <!-- 운동 기록 -->
@@ -479,6 +520,14 @@ const app = {
     phaseDuration: 0,
     currentSpeed:  0,
 };
+
+// ── 접기/펼치기 ──────────────────────────────────────────
+function toggleCollapse(id) {
+    const body  = document.getElementById(`body-${id}`);
+    const arrow = document.getElementById(`arrow-${id}`);
+    const isOpen = body.classList.toggle('open');
+    arrow.classList.toggle('open', isOpen);
+}
 
 // ── 초기화 ───────────────────────────────────────────────
 function init() {
