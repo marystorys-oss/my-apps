@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🏃 인터벌 러닝</title>
+    <title>🏃 트레드밀 인터벌 러닝</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -157,7 +157,19 @@
         .set-progress {
             font-size: 0.95rem;
             color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        /* ── 다음 구성 미리보기 ── */
+        .next-phase {
+            font-size: 0.82rem;
+            color: var(--muted);
             margin-bottom: 16px;
+            min-height: 1.2em;
+        }
+
+        .next-phase span {
+            font-weight: 600;
         }
 
         .progress-bar {
@@ -403,7 +415,7 @@
 <!-- 헤더 -->
 <div class="app-header">
     <div class="header-dot"></div>
-    <h1>🏃 인터벌 러닝</h1>
+    <h1>🏃 트레드밀 인터벌 러닝</h1>
 </div>
 
 <div class="content">
@@ -414,6 +426,7 @@
     <div class="timer-display" id="timer-display">00:00</div>
     <div class="speed-display" id="speed-display" style="color:var(--muted)">– km/h</div>
     <div class="set-progress" id="set-progress">–</div>
+    <div class="next-phase" id="next-phase"></div>
     <div class="progress-bar">
         <div class="progress-fill" id="progress-fill"></div>
     </div>
@@ -529,8 +542,36 @@ function toggleCollapse(id) {
     arrow.classList.toggle('open', isOpen);
 }
 
+// ── 세트 설정 자동저장/불러오기 ──────────────────────────
+function saveConfig() {
+    localStorage.setItem('treadmill-config', JSON.stringify({
+        warmup:   app.warmup,
+        cooldown: app.cooldown,
+        sets:     app.sets,
+    }));
+}
+
+function loadConfig() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('treadmill-config'));
+        if (saved && saved.sets && saved.sets.length) {
+            app.warmup   = saved.warmup;
+            app.cooldown = saved.cooldown;
+            app.sets     = saved.sets;
+            // 웜업/쿨다운 표시 갱신
+            document.getElementById('warmup-time').textContent    = fmt(app.warmup.time);
+            document.getElementById('warmup-speed').textContent   = app.warmup.speed.toFixed(1);
+            document.getElementById('cooldown-time').textContent  = fmt(app.cooldown.time);
+            document.getElementById('cooldown-speed').textContent = app.cooldown.speed.toFixed(1);
+            return true;
+        }
+    } catch(e) {}
+    return false;
+}
+
 // ── 초기화 ───────────────────────────────────────────────
 function init() {
+    loadConfig();
     renderSets();
     renderHistory();
     refreshTimerUI();
@@ -546,6 +587,7 @@ function adjWC(phase, field, delta) {
         app[phase].speed = Math.max(0.5, Math.round((app[phase].speed + delta) * 10) / 10);
         document.getElementById(`${phase}-speed`).textContent = app[phase].speed.toFixed(1);
     }
+    saveConfig();
 }
 
 // ── 세트 렌더링 ───────────────────────────────────────────
@@ -614,6 +656,7 @@ function adjSet(i, phase, field, delta) {
         app.sets[i][phase].speed = Math.max(0.5, Math.round((app.sets[i][phase].speed + delta) * 10) / 10);
         document.getElementById(`s${i}-${phase}-speed`).textContent = app.sets[i][phase].speed.toFixed(1);
     }
+    saveConfig();
 }
 
 function addSet() {
@@ -624,12 +667,14 @@ function addSet() {
         walk: { ...last.walk }
     });
     renderSets();
+    saveConfig();
 }
 
 function deleteSet(i) {
     if (app.running || app.sets.length <= 1) return;
     app.sets.splice(i, 1);
     renderSets();
+    saveConfig();
 }
 
 // ── 타이머 ───────────────────────────────────────────────
@@ -731,6 +776,37 @@ function finish() {
     speak('운동 완료! 수고하셨습니다!');
 }
 
+// ── 다음 구성 계산 ────────────────────────────────────────
+function getNextPhaseInfo() {
+    const { phase, currentSet, sets, warmup, cooldown } = app;
+
+    if (phase === 'idle' || phase === 'done') return null;
+
+    if (phase === 'warmup') {
+        const s = sets[0];
+        return { label: '달리기', speed: s.run.speed, time: s.run.time, color: 'var(--run-color)' };
+    }
+    if (phase === 'run') {
+        const s = sets[currentSet];
+        return { label: '걷기', speed: s.walk.speed, time: s.walk.time, color: 'var(--walk-color)' };
+    }
+    if (phase === 'walk') {
+        const nextSet = currentSet + 1;
+        if (nextSet < sets.length) {
+            const s = sets[nextSet];
+            return { label: `달리기 (${nextSet + 1}세트)`, speed: s.run.speed, time: s.run.time, color: 'var(--run-color)' };
+        } else if (cooldown.time > 0) {
+            return { label: '쿨다운', speed: cooldown.speed, time: cooldown.time, color: 'var(--cooldown-color)' };
+        } else {
+            return { label: '완료', speed: null, time: null, color: 'var(--muted)' };
+        }
+    }
+    if (phase === 'cooldown') {
+        return { label: '완료', speed: null, time: null, color: 'var(--muted)' };
+    }
+    return null;
+}
+
 // ── UI 갱신 ──────────────────────────────────────────────
 const PHASE_CFG = {
     idle:     { label: '대기 중',      cls: 'badge-idle',     color: 'var(--muted)' },
@@ -774,6 +850,17 @@ function refreshTimerUI() {
     const fill = document.getElementById('progress-fill');
     fill.style.width           = `${pct}%`;
     fill.style.backgroundColor = cfg.color;
+
+    // 다음 구성 미리보기
+    const nextEl = document.getElementById('next-phase');
+    const next = getNextPhaseInfo();
+    if (next && next.time) {
+        nextEl.innerHTML = `다음 ▸ <span style="color:${next.color}">${next.label}</span> &nbsp;${next.speed.toFixed(1)}km/h &nbsp;·&nbsp; ${fmt(next.time)}`;
+    } else if (next && !next.time) {
+        nextEl.innerHTML = `다음 ▸ <span style="color:${next.color}">${next.label}</span>`;
+    } else {
+        nextEl.textContent = '';
+    }
 }
 
 // ── 음성 안내 ─────────────────────────────────────────────
