@@ -1,5 +1,5 @@
 // 인터벌 러닝 Service Worker
-const CACHE_NAME = 'interval-running-v1';
+const CACHE_NAME = 'interval-running-v2';
 const CACHED_FILES = [
     './',
     './index.html',
