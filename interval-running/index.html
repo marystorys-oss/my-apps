@@ -463,8 +463,8 @@
         .routine-btn-load  { background: var(--run-color); color: white; }
         .routine-btn-del   { background: none; border: 1px solid var(--border); color: var(--muted); }
 
-        /* ── 가로모드 레이아웃 ── */
-        @media (orientation: landscape) and (max-height: 520px) {
+        /* ── 가로모드 레이아웃 (스마트폰 기준, 태블릿 제외) ── */
+        @media (orientation: landscape) and (max-width: 960px) {
             body { max-width: 100%; padding-bottom: 20px; }
 
             .app-header { padding: 6px 14px; margin-bottom: 6px; }
