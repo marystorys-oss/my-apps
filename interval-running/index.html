@@ -124,16 +124,16 @@
         /* ── 타이머 ── */
         .timer-card {
             text-align: center;
-            padding: 28px 16px 24px;
+            padding: 16px 16px 14px;
         }
 
         .phase-badge {
             display: inline-block;
-            padding: 6px 18px;
+            padding: 5px 16px;
             border-radius: 20px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             font-weight: 700;
-            margin-bottom: 18px;
+            margin-bottom: 10px;
             transition: all 0.3s;
         }
 
@@ -148,7 +148,7 @@
             font-weight: 800;
             font-variant-numeric: tabular-nums;
             letter-spacing: 0.04em;
-            margin-bottom: 6px;
+            margin-bottom: 2px;
             transition: color 0.3s;
         }
 
@@ -156,7 +156,7 @@
         .speed-display {
             font-size: 1.4rem;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             transition: color 0.3s;
             letter-spacing: 0.02em;
         }
@@ -164,14 +164,14 @@
         .set-progress {
             font-size: 0.95rem;
             color: var(--muted);
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
 
         /* ── 다음 구성 미리보기 ── */
         .next-phase {
             font-size: 0.82rem;
             color: var(--muted);
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             min-height: 1.2em;
         }
 
@@ -465,50 +465,55 @@
 
         /* ── 가로모드 레이아웃 ── */
         @media (orientation: landscape) and (max-height: 520px) {
-            body { max-width: 100%; padding-bottom: 24px; }
+            body { max-width: 100%; padding-bottom: 20px; }
 
-            .app-header { padding: 10px 16px; margin-bottom: 10px; }
-            .app-header h1 { font-size: 1rem; }
+            .app-header { padding: 6px 14px; margin-bottom: 6px; }
+            .app-header h1 { font-size: 0.95rem; }
             .header-dot { width: 6px; height: 6px; }
 
+            /* 전체를 세로 flex로 */
             .content {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto auto 1fr;
-                gap: 10px;
-                padding: 0 12px;
-            }
-
-            /* 타이머 왼쪽 위 */
-            .timer-wrapper {
-                grid-column: 1;
-                grid-row: 1 / 3;
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
+                padding: 0 10px;
+            }
+
+            /* ── 상단: 타이머(좌) + 버튼(우 세로) ── */
+            .timer-wrapper {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                align-items: stretch;
             }
 
             .timer-card {
-                padding: 14px 12px;
                 flex: 1;
+                padding: 8px 14px 10px;
             }
 
-            .phase-badge { margin-bottom: 8px; font-size: 0.78rem; padding: 4px 12px; }
-            .timer-display { font-size: 3rem; margin-bottom: 2px; }
-            .speed-display { font-size: 1.1rem; margin-bottom: 4px; }
-            .set-progress  { font-size: 0.82rem; margin-bottom: 4px; }
-            .next-phase    { font-size: 0.75rem; margin-bottom: 8px; }
+            .phase-badge   { margin-bottom: 3px; font-size: 0.74rem; padding: 3px 10px; }
+            .timer-display { font-size: 2.6rem; margin-bottom: 0; }
+            .speed-display { font-size: 0.95rem; margin-bottom: 1px; }
+            .set-progress  { font-size: 0.78rem; margin-bottom: 1px; }
+            .next-phase    { font-size: 0.7rem; margin-bottom: 5px; }
 
+            /* 우측 세로 버튼 */
             .controls {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                width: 76px;
+                flex-shrink: 0;
                 margin-bottom: 0;
-                gap: 8px;
+                justify-content: center;
             }
 
-            /* 설정 오른쪽 */
+            .btn-main { padding: 14px 4px; font-size: 0.78rem; }
+            .btn-sub  { padding: 11px 4px; font-size: 0.78rem; }
+
+            /* ── 하단: 설정 전체 너비 ── */
             .settings-wrapper {
-                grid-column: 2;
-                grid-row: 1 / 4;
-                overflow-y: auto;
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
@@ -516,12 +521,7 @@
 
             .settings-wrapper .card { margin-bottom: 0; }
 
-            /* 기록은 전체 너비 아래 */
-            .history-wrapper {
-                grid-column: 1 / 3;
-                grid-row: 3;
-            }
-
+            /* 기록 전체 너비 */
             .history-wrapper .card { margin-bottom: 0; }
         }
     </style>
