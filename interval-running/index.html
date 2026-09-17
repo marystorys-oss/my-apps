@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🏃 트레드밀 인터벌 러닝</title>
+    <title>🏃 인터벌 러닝</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF4444">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="인터벌 러닝">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -103,14 +112,12 @@
         .collapse-arrow.open { transform: rotate(180deg); }
 
         .collapsible-body {
-            overflow: hidden;
-            max-height: 0;
-            transition: max-height 0.3s ease, margin-top 0.3s ease;
+            display: none;
             margin-top: 0;
         }
 
         .collapsible-body.open {
-            max-height: 2000px;
+            display: block;
             margin-top: 14px;
         }
 
@@ -408,6 +415,115 @@
             font-size: 0.78rem;
             cursor: pointer;
         }
+
+        /* ── 내 루틴 저장 ── */
+        .routine-slot {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .routine-slot:last-child { border-bottom: none; }
+
+        .routine-info { flex: 1; }
+
+        .routine-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .routine-detail {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .routine-empty {
+            font-size: 0.88rem;
+            color: var(--muted);
+        }
+
+        .routine-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .routine-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .routine-btn-save  { background: var(--border); color: var(--text); }
+        .routine-btn-load  { background: var(--run-color); color: white; }
+        .routine-btn-del   { background: none; border: 1px solid var(--border); color: var(--muted); }
+
+        /* ── 가로모드 레이아웃 ── */
+        @media (orientation: landscape) and (max-height: 520px) {
+            body { max-width: 100%; padding-bottom: 24px; }
+
+            .app-header { padding: 10px 16px; margin-bottom: 10px; }
+            .app-header h1 { font-size: 1rem; }
+            .header-dot { width: 6px; height: 6px; }
+
+            .content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto 1fr;
+                gap: 10px;
+                padding: 0 12px;
+            }
+
+            /* 타이머 왼쪽 위 */
+            .timer-wrapper {
+                grid-column: 1;
+                grid-row: 1 / 3;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .timer-card {
+                padding: 14px 12px;
+                flex: 1;
+            }
+
+            .phase-badge { margin-bottom: 8px; font-size: 0.78rem; padding: 4px 12px; }
+            .timer-display { font-size: 3rem; margin-bottom: 2px; }
+            .speed-display { font-size: 1.1rem; margin-bottom: 4px; }
+            .set-progress  { font-size: 0.82rem; margin-bottom: 4px; }
+            .next-phase    { font-size: 0.75rem; margin-bottom: 8px; }
+
+            .controls {
+                margin-bottom: 0;
+                gap: 8px;
+            }
+
+            /* 설정 오른쪽 */
+            .settings-wrapper {
+                grid-column: 2;
+                grid-row: 1 / 4;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .settings-wrapper .card { margin-bottom: 0; }
+
+            /* 기록은 전체 너비 아래 */
+            .history-wrapper {
+                grid-column: 1 / 3;
+                grid-row: 3;
+            }
+
+            .history-wrapper .card { margin-bottom: 0; }
+        }
     </style>
 </head>
 <body>
@@ -415,12 +531,14 @@
 <!-- 헤더 -->
 <div class="app-header">
     <div class="header-dot"></div>
-    <h1>🏃 트레드밀 인터벌 러닝</h1>
+    <h1>🏃 인터벌 러닝</h1>
 </div>
 
 <div class="content">
 
-<!-- 타이머 -->
+<!-- ── 왼쪽: 타이머 + 컨트롤 ── -->
+<div class="timer-wrapper">
+
 <div class="card timer-card">
     <div class="phase-badge badge-idle" id="phase-badge">대기 중</div>
     <div class="timer-display" id="timer-display">00:00</div>
@@ -437,6 +555,11 @@
     <button class="btn-main" id="main-btn" onclick="toggleTimer()">▶ 시작</button>
     <button class="btn-sub"               onclick="resetTimer()">■ 초기화</button>
 </div>
+
+</div><!-- /timer-wrapper -->
+
+<!-- ── 오른쪽: 설정 ── -->
+<div class="settings-wrapper">
 
 <!-- 웜업 / 쿨다운 -->
 <div class="card">
@@ -505,7 +628,21 @@
     </div>
 </div>
 
-<!-- 운동 기록 -->
+<!-- 내 루틴 -->
+<div class="card">
+    <div class="collapsible-header" onclick="toggleCollapse('routines')">
+        <div class="card-title">내 루틴 저장</div>
+        <span class="collapse-arrow" id="arrow-routines">▼</span>
+    </div>
+    <div class="collapsible-body" id="body-routines">
+        <div id="routines-container"></div>
+    </div>
+</div>
+
+</div><!-- /settings-wrapper -->
+
+<!-- ── 기록 (가로모드에선 전체 너비) ── -->
+<div class="history-wrapper">
 <div class="card">
     <div class="section-header">
         <div class="card-title">운동 기록</div>
@@ -513,6 +650,7 @@
     </div>
     <div id="history-container"></div>
 </div>
+</div><!-- /history-wrapper -->
 
 </div><!-- /content -->
 
@@ -574,6 +712,7 @@ function init() {
     loadConfig();
     renderSets();
     renderHistory();
+    renderPresets();
     refreshTimerUI();
 }
 
@@ -668,6 +807,11 @@ function addSet() {
     });
     renderSets();
     saveConfig();
+    // 새 세트로 스크롤
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.set-card');
+        if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
 }
 
 function deleteSet(i) {
@@ -723,25 +867,28 @@ function tick() {
 function enterPhase(phase) {
     app.phase = phase;
 
-    const phaseData = {
-        warmup:   { time: app.warmup.time,                        speed: app.warmup.speed },
-        run:      { time: app.sets[app.currentSet].run.time,      speed: app.sets[app.currentSet].run.speed },
-        walk:     { time: app.sets[app.currentSet].walk.time,     speed: app.sets[app.currentSet].walk.speed },
-        cooldown: { time: app.cooldown.time,                      speed: app.cooldown.speed },
-    };
+    let time, speed;
+    if (phase === 'warmup') {
+        time = app.warmup.time;   speed = app.warmup.speed;
+    } else if (phase === 'run') {
+        time = app.sets[app.currentSet].run.time;   speed = app.sets[app.currentSet].run.speed;
+    } else if (phase === 'walk') {
+        time = app.sets[app.currentSet].walk.time;  speed = app.sets[app.currentSet].walk.speed;
+    } else if (phase === 'cooldown') {
+        time = app.cooldown.time; speed = app.cooldown.speed;
+    }
 
-    const d = phaseData[phase];
-    app.timeLeft      = d.time;
-    app.phaseDuration = d.time;
-    app.currentSpeed  = d.speed;
+    app.timeLeft      = time;
+    app.phaseDuration = time;
+    app.currentSpeed  = speed;
 
-    const msg = {
-        warmup:   `웜업 시작. 속도 ${d.speed} 킬로미터.`,
-        run:      `${app.currentSet + 1}세트, 달리기! 속도 ${d.speed} 킬로미터.`,
-        walk:     `걷기. 속도 ${d.speed} 킬로미터.`,
-        cooldown: `쿨다운 시작. 속도 ${d.speed} 킬로미터.`,
+    const msgs = {
+        warmup:   `웜업 시작. 속도 ${speed} 킬로미터.`,
+        run:      `${app.currentSet + 1}세트, 달리기! 속도 ${speed} 킬로미터.`,
+        walk:     `걷기. 속도 ${speed} 킬로미터.`,
+        cooldown: `쿨다운 시작. 속도 ${speed} 킬로미터.`,
     };
-    speak(msg[phase] || '');
+    speak(msgs[phase] || '');
     refreshTimerUI();
 }
 
@@ -922,6 +1069,87 @@ function clearHistory() {
     renderHistory();
 }
 
+// ── 내 루틴 저장/불러오기 ────────────────────────────────
+const PRESET_KEY = 'interval-presets';
+const PRESET_COUNT = 3;
+
+function getPresets() {
+    try {
+        return JSON.parse(localStorage.getItem(PRESET_KEY)) || [null, null, null];
+    } catch(e) { return [null, null, null]; }
+}
+
+function renderPresets() {
+    const presets = getPresets();
+    const c = document.getElementById('routines-container');
+    c.innerHTML = presets.map((p, i) => {
+        if (p) {
+            const totalMin = Math.round((p.sets.reduce((s, set) => s + set.run.time + set.walk.time, 0)
+                + p.warmup.time + p.cooldown.time) / 60);
+            const detail = `${p.sets.length}세트 · 약 ${totalMin}분 · 달리기 ${p.sets[0].run.speed.toFixed(1)}km/h`;
+            return `
+            <div class="routine-slot">
+                <div class="routine-info">
+                    <div class="routine-name">루틴 ${i + 1}</div>
+                    <div class="routine-detail">${detail}</div>
+                </div>
+                <div class="routine-btns">
+                    <button class="routine-btn routine-btn-load" onclick="loadPreset(${i})">불러오기</button>
+                    <button class="routine-btn routine-btn-save" onclick="savePreset(${i})">덮어쓰기</button>
+                    <button class="routine-btn routine-btn-del"  onclick="deletePreset(${i})">삭제</button>
+                </div>
+            </div>`;
+        } else {
+            return `
+            <div class="routine-slot">
+                <div class="routine-info">
+                    <div class="routine-empty">루틴 ${i + 1} — 비어있음</div>
+                </div>
+                <div class="routine-btns">
+                    <button class="routine-btn routine-btn-save" onclick="savePreset(${i})">현재 저장</button>
+                </div>
+            </div>`;
+        }
+    }).join('');
+}
+
+function savePreset(i) {
+    if (app.running) return;
+    const presets = getPresets();
+    presets[i] = {
+        warmup:   { ...app.warmup },
+        cooldown: { ...app.cooldown },
+        sets:     app.sets.map(s => ({ run: { ...s.run }, walk: { ...s.walk } })),
+    };
+    localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+    renderPresets();
+}
+
+function loadPreset(i) {
+    if (app.running) return;
+    const presets = getPresets();
+    const p = presets[i];
+    if (!p) return;
+    app.warmup   = p.warmup;
+    app.cooldown = p.cooldown;
+    app.sets     = p.sets;
+    document.getElementById('warmup-time').textContent    = fmt(app.warmup.time);
+    document.getElementById('warmup-speed').textContent   = app.warmup.speed.toFixed(1);
+    document.getElementById('cooldown-time').textContent  = fmt(app.cooldown.time);
+    document.getElementById('cooldown-speed').textContent = app.cooldown.speed.toFixed(1);
+    renderSets();
+    saveConfig();
+    refreshTimerUI();
+}
+
+function deletePreset(i) {
+    if (!confirm(`루틴 ${i + 1}을 삭제할까요?`)) return;
+    const presets = getPresets();
+    presets[i] = null;
+    localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+    renderPresets();
+}
+
 // ── 유틸 ─────────────────────────────────────────────────
 function fmt(sec) {
     const m = Math.floor(sec / 60);
@@ -930,6 +1158,15 @@ function fmt(sec) {
 }
 
 init();
+
+// ── 서비스워커 등록 (PWA 오프라인 지원) ──────────────────
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('SW 등록 완료'))
+            .catch(e => console.warn('SW 등록 실패:', e));
+    });
+}
 </script>
 </body>
 </html>
